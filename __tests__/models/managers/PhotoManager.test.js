@@ -33,6 +33,19 @@ describe('PhotoManager', () => {
     expect(photoManager.getCurrentPhoto()).toBeNull();
   });
 
+  it('should save latitude and longitude when they are provided', () => {
+    // GIVEN
+    const photoManager = new PhotoManager();
+
+    // WHEN
+    const photo = photoManager.setCurrentPhoto('file:///photo.jpg', undefined, 28.632995, -106.069099);
+
+    // THEN
+    expect(photo.latitude).toBe(28.632995);
+    expect(photo.longitude).toBe(-106.069099);
+    expect(photoManager.getCurrentPhoto()).toBe(photo);
+  });
+
   it('should use the mocked CameraTools result to build the current photo state', async () => {
     // GIVEN
     const photoManager = new PhotoManager();

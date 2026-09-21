@@ -5,8 +5,8 @@ class PhotoManager {
     this.currentPhoto = null;
   }
 
-  setCurrentPhoto(uri, createdAt = new Date().toISOString()) {
-    this.currentPhoto = new PhotoVO(uri, createdAt);
+  setCurrentPhoto(uri, createdAt = new Date().toISOString(), latitude = null, longitude = null) {
+    this.currentPhoto = new PhotoVO(uri, createdAt, latitude, longitude);
     return this.currentPhoto;
   }
 
