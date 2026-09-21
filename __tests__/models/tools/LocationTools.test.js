@@ -1,14 +1,22 @@
 import * as Location from 'expo-location';
 import LocationTools from '../../../models/tools/LocationTools';
 
-jest.mock('expo-location', () => ({
-  getForegroundPermissionsAsync: jest.fn(),
-  requestForegroundPermissionsAsync: jest.fn(),
-  getCurrentPositionAsync: jest.fn(),
-  Accuracy: {
-    High: 6,
-  },
-}), { virtual: true });
+jest.mock('expo-location', () => {
+  const locationApi = {
+    getForegroundPermissionsAsync: jest.fn(),
+    requestForegroundPermissionsAsync: jest.fn(),
+    getCurrentPositionAsync: jest.fn(),
+    Accuracy: {
+      High: 6,
+    },
+  };
+
+  return {
+    __esModule: true,
+    default: locationApi,
+    ...locationApi,
+  };
+});
 
 describe('LocationTools', () => {
   beforeEach(() => {
