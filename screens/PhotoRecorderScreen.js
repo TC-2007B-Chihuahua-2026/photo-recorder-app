@@ -1,7 +1,11 @@
 import React from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
+import { CameraView } from 'expo-camera';
+import usePhotoRecorder from '../hooks/usePhotoRecorder';
 
 export default function PhotoRecorderScreen() {
+  const { cameraRef, permissionStatus, photoUri, takePhoto } = usePhotoRecorder();
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Photo Recorder</Text>
@@ -9,12 +13,30 @@ export default function PhotoRecorderScreen() {
         Captura una foto y registra su ubicación.
       </Text>
 
-      <Pressable style={styles.button} onPress={() => {}}>
+      <View style={styles.cameraContainer}>
+        {permissionStatus === 'granted' ? (
+          <CameraView ref={cameraRef} style={styles.camera} facing="back" />
+        ) : (
+          <View style={styles.cameraPlaceholder}>
+            <Text style={styles.previewText}>
+              {permissionStatus === 'denied'
+                ? 'Se necesitan permisos de cámara.'
+                : 'Solicitando permisos de cámara...'}
+            </Text>
+          </View>
+        )}
+      </View>
+
+      <Pressable style={styles.button} onPress={takePhoto}>
         <Text style={styles.buttonText}>Tomar foto</Text>
       </Pressable>
 
       <View style={styles.previewContainer}>
-        <Text style={styles.previewText}>Foto tomada aparecerá aquí</Text>
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={styles.previewImage} />
+        ) : (
+          <Text style={styles.previewText}>Foto tomada aparecerá aquí</Text>
+        )}
       </View>
     </View>
   );
@@ -39,6 +61,23 @@ const styles = StyleSheet.create({
     color: '#4B5563',
     marginBottom: 24,
     lineHeight: 22,
+  },
+  cameraContainer: {
+    height: 240,
+    borderRadius: 16,
+    overflow: 'hidden',
+    marginBottom: 20,
+    backgroundColor: '#111827',
+  },
+  camera: {
+    flex: 1,
+  },
+  cameraPlaceholder: {
+    flex: 1,
+    backgroundColor: '#111827',
+    alignItems: 'center',
+    justifyContent: 'center',
+    paddingHorizontal: 16,
   },
   button: {
     backgroundColor: '#5005F2',
@@ -73,5 +112,10 @@ const styles = StyleSheet.create({
     color: '#6B7280',
     fontSize: 16,
     textAlign: 'center',
+  },
+  previewImage: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 12,
   },
 });
