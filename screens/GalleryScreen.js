@@ -1,75 +1,75 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
-
-const placeholderPhotos = [
-  {
-    id: 1,
-    label: 'Reunión',
-    createdAt: '2026-09-27 10:42',
-    latitude: '40.4168',
-    longitude: '-3.7038',
-    color: '#E0E7FF',
-    accent: '#4F46E5',
-  },
-  {
-    id: 2,
-    label: 'Paisaje',
-    createdAt: '2026-09-27 12:15',
-    latitude: '41.6529',
-    longitude: '-0.8801',
-    color: '#DCFCE7',
-    accent: '#16A34A',
-  },
-  {
-    id: 3,
-    label: 'Café',
-    createdAt: '2026-09-27 15:05',
-    latitude: '40.4172',
-    longitude: '-3.7040',
-    color: '#FEF3C7',
-    accent: '#D97706',
-  },
-  {
-    id: 4,
-    label: 'Archivo',
-    createdAt: '2026-09-27 18:35',
-    latitude: '39.4699',
-    longitude: '-0.3763',
-    color: '#F3E8FF',
-    accent: '#9333EA',
-  },
-];
+import React, { useEffect } from 'react';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import usePhotoGallery from '../hooks/usePhotoGallery';
 
 export default function GalleryScreen() {
+  const { photos, isLoading, error, refreshPhotos } = usePhotoGallery();
+
+  useEffect(() => {
+    refreshPhotos();
+  }, [refreshPhotos]);
+
+  const formatDate = (value) => {
+    if (!value) {
+      return 'No disponible';
+    }
+
+    const date = new Date(value);
+
+    if (Number.isNaN(date.getTime())) {
+      return value;
+    }
+
+    return date.toLocaleString('es-ES', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
   return (
     <ScrollView style={styles.scrollView} contentContainerStyle={styles.contentContainer}>
       <View style={styles.cardSummary}>
-        <Text style={styles.summaryText}>4 fotos guardadas</Text>
+        <Text style={styles.summaryText}>
+          {isLoading ? 'Cargando fotos...' : `${photos.length} fotos guardadas`}
+        </Text>
       </View>
 
+      {error ? <Text style={styles.errorText}>{error}</Text> : null}
+
+      {!isLoading && photos.length === 0 ? (
+        <View style={styles.emptyState}>
+          <Text style={styles.emptyText}>No hay fotos guardadas todavía.</Text>
+        </View>
+      ) : null}
+
       <View style={styles.grid}>
-        {placeholderPhotos.map((photo) => (
-          <View key={photo.id} style={styles.photoCard}>
-            <View style={[styles.photoPlaceholder, { backgroundColor: photo.color }]}>
-              <View style={[styles.photoBadge, { backgroundColor: photo.accent }]} />
-            </View>
+        {photos.map((photo) => (
+          <View key={photo.id ?? photo.uri} style={styles.photoCard}>
+            {photo.uri ? (
+              <Image source={{ uri: photo.uri }} style={styles.photoImage} />
+            ) : (
+              <View style={styles.photoPlaceholder} />
+            )}
 
             <View style={styles.photoInfo}>
-              <Text style={styles.photoLabel}>{photo.label}</Text>
+              <Text style={styles.photoLabel}>Foto {photo.id ?? 'nueva'}</Text>
 
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Fecha</Text>
-                <Text style={styles.metaValue}>{photo.createdAt}</Text>
+                <Text style={styles.metaValue}>{formatDate(photo.createdAt)}</Text>
               </View>
 
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Latitud</Text>
-                <Text style={styles.metaValue}>{photo.latitude}</Text>
+                <Text style={styles.metaValue}>{photo.latitude ?? 'No disponible'}</Text>
               </View>
 
               <View style={styles.metaRow}>
                 <Text style={styles.metaLabel}>Longitud</Text>
-                <Text style={styles.metaValue}>{photo.longitude}</Text>
+                <Text style={styles.metaValue}>{photo.longitude ?? 'No disponible'}</Text>
               </View>
             </View>
           </View>
@@ -103,6 +103,25 @@ const styles = StyleSheet.create({
     fontSize: 15,
     fontWeight: '600',
   },
+  errorText: {
+    color: '#B91C1C',
+    fontSize: 13,
+    fontWeight: '600',
+    marginBottom: 12,
+  },
+  emptyState: {
+    backgroundColor: '#F9FAFB',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    borderRadius: 14,
+    padding: 18,
+    marginBottom: 18,
+  },
+  emptyText: {
+    color: '#6B7280',
+    fontSize: 14,
+    textAlign: 'center',
+  },
   grid: {
     flexDirection: 'row',
     flexWrap: 'wrap',
@@ -117,16 +136,14 @@ const styles = StyleSheet.create({
     borderRadius: 16,
     overflow: 'hidden',
   },
+  photoImage: {
+    width: '100%',
+    height: 180,
+    backgroundColor: '#E5E7EB',
+  },
   photoPlaceholder: {
     height: 180,
-    justifyContent: 'flex-end',
-    padding: 12,
-  },
-  photoBadge: {
-    width: 18,
-    height: 18,
-    borderRadius: 9,
-    opacity: 0.9,
+    backgroundColor: '#E5E7EB',
   },
   photoInfo: {
     paddingHorizontal: 12,
@@ -155,5 +172,6 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     flexShrink: 1,
     textAlign: 'right',
+    marginLeft: 8,
   },
 });
