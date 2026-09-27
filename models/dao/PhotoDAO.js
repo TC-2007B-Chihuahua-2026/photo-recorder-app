@@ -53,18 +53,44 @@ class PhotoDAO {
    * @returns {Promise<PhotoVO[]>} A list of photo value objects.
    * @throws {Error} This method is not implemented yet.
    */
-  getPhotos() {
-    throw new Error('PhotoDAO.getPhotos is not implemented yet.');
+  async getPhotos() {
+    const database = this.database || Database.getInstance();
+
+    if (!database || typeof database.getAllAsync !== 'function') {
+      throw new Error('Database connection is required for PhotoDAO.getPhotos.');
+    }
+
+    const rows = await database.getAllAsync('SELECT * FROM photos ORDER BY createdAt DESC');
+
+    return rows.map((row) => {
+      const photo = new PhotoVO(row.uri, row.createdAt, row.latitude, row.longitude);
+      photo.id = row.id;
+      return photo;
+    });
   }
 
   /**
    * Retrieves a photo by its identifier.
    *
+   * @param {number} id - The primary key of the photo record.
    * @returns {Promise<PhotoVO|null>} The matching photo or null when no record is found.
-   * @throws {Error} This method is not implemented yet.
    */
-  getPhotoById() {
-    throw new Error('PhotoDAO.getPhotoById is not implemented yet.');
+  async getPhotoById(id) {
+    const database = this.database || Database.getInstance();
+
+    if (!database || typeof database.getFirstAsync !== 'function') {
+      throw new Error('Database connection is required for PhotoDAO.getPhotoById.');
+    }
+
+    const row = await database.getFirstAsync('SELECT * FROM photos WHERE id = ?', id);
+
+    if (!row) {
+      return null;
+    }
+
+    const photo = new PhotoVO(row.uri, row.createdAt, row.latitude, row.longitude);
+    photo.id = row.id;
+    return photo;
   }
 
   /**
