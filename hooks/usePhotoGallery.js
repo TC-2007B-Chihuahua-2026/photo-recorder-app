@@ -1,6 +1,18 @@
 import { useCallback, useMemo, useState } from 'react';
 import PhotoManager from '../models/managers/PhotoManager';
 
+/**
+ * Hook that loads and exposes the photo gallery state from the manager layer.
+ *
+ * @returns {{
+ *   photos: Array<object>,
+ *   selectedPhoto: object|null,
+ *   isLoading: boolean,
+ *   error: string|null,
+ *   refreshPhotos: () => Promise<Array<object>>,
+ *   loadPhotoById: (id: number) => Promise<object|null>
+ * }} The gallery state and data access helpers.
+ */
 export default function usePhotoGallery() {
   const photoManager = useMemo(() => new PhotoManager(), []);
 

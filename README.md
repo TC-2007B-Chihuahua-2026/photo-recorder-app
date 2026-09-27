@@ -8,126 +8,165 @@ npx create-expo-app@latest photo-recorder-app --template blank
 
 ## Purpose
 
-The purpose of this app is to let the user take a photo from the application and record the following information:
+The app lets a user capture a photo and store it together with the capture metadata:
 
-- the captured photo
-- the latitude
-- the longitude
-- the timestamp of the capture
-- the data stored locally in a SQLite database
+- photo URI
+- created timestamp
+- latitude
+- longitude
+- local persistence in SQLite
 
-This is useful for scenarios where the user needs to document a location and attach a photo to that record, with the information stored locally on the device.
+This is useful when the user needs to record a location-based observation and keep the information stored locally on the device.
 
 ## Features
 
-- Capture a photo using the device camera
-- Retrieve current geolocation coordinates
-- Save photo metadata and coordinates in a local SQLite database
-- View saved photo entries locally on the device
-- Work as a lightweight offline local recorder app
+- capture a photo with the device camera
+- check and request camera permissions
+- read the current geolocation when available
+- save photo metadata and coordinates in a local SQLite database
+- view saved photos in a gallery screen
+- work as a lightweight offline local recorder app
 
 ## Tech Stack
 
-- Expo
+- Expo SDK 54
 - React Native
-- SQLite local database
+- Expo Router
 - Expo Camera
 - Expo Location
 - Expo SQLite
+- Jest + jest-expo for tests
+
+## Expo Router
+
+This app uses Expo Router for file-based navigation instead of a custom navigation library. The main routes are defined in the `app/` folder:
+
+- `app/index.js` is the home screen for the photo recorder
+- `app/gallery.js` is the gallery screen
+- `app/_layout.js` provides the shared app shell and layout styling used by the routes
+
+Each file in `app/` acts as a route entry, and the layout wraps the screens so common UI such as the menu or shell remains consistent across screens.
+
+## Project structure
+
+```text
+photo-recorder-app/
+├── app/
+│   ├── _layout.js
+│   ├── gallery.js
+│   └── index.js
+├── hooks/
+│   ├── usePhotoGallery.js
+│   └── usePhotoRecorder.js
+├── models/
+│   ├── dao/
+│   │   └── PhotoDAO.js
+│   ├── database/
+│   │   └── Database.js
+│   ├── managers/
+│   │   └── PhotoManager.js
+│   ├── tools/
+│   │   ├── CameraTools.js
+│   │   └── LocationTools.js
+│   └── valueobjects/
+│       └── PhotoVO.js
+├── screens/
+│   ├── GalleryScreen.js
+│   └── PhotoRecorderScreen.js
+├── __tests__/
+│   └── models/
+│       ├── dao/
+│       │   └── PhotoDAO.test.js
+│       └── managers/
+│           └── PhotoManager.test.js
+├── App.js
+├── app.json
+├── index.js
+├── package.json
+├── README.md
+└── assets/
+```
+
+## Architecture
+
+The application follows a simple layered flow:
+
+```text
+Screen -> Hook -> Manager -> DAO -> SQLite database
+```
+
+This keeps UI code focused on presentation and moves the business logic to the manager layer.
+
+### Main responsibilities
+
+- Screen: render UI and display state
+- Hook: coordinate interaction and state updates
+- Manager: orchestrate capture, permissions, and persistence logic
+- DAO: read/write data to SQLite
+- PhotoVO: validate photo metadata and coordinates
 
 ## Prerequisites
 
 Before running the app, make sure you have installed:
 
-- Node.js 20+ recommended
-- npm or Yarn
+- Node.js 20+
+- npm
 - Expo CLI
 - Android Studio with an Android emulator, or
-- Xcode with an iOS simulator (for macOS only), or
-- Expo Go app on a physical device
+- Xcode with an iOS simulator (macOS only), or
+- Expo Go on a physical device
 
 ## Install dependencies
 
-From the project root:
-
 ```bash
 npm install
 ```
 
-## Run the application
+## Run the app
 
-This project targets Expo SDK 54. The app is designed to run with Expo tooling and native modules such as `expo-camera`, `expo-location`, and `expo-sqlite`.
+This project targets Expo SDK 54 and uses native modules such as `expo-camera`, `expo-location`, and `expo-sqlite`.
 
-### 1) Install dependencies
-
-```bash
-npm install
-```
-
-### 2) Start the Expo development server
+### Start Expo Metro
 
 ```bash
 npx expo start --clear
 ```
 
-This starts Metro and prints a QR code plus a list of available run options.
-
-### 3) Run on iPhone simulator (macOS required)
-
-1. Open Xcode.
-2. Start an iPhone simulator from Xcode or the Simulator app.
-3. In the project root, run:
+### Run on iPhone simulator (macOS only)
 
 ```bash
 npx expo start --ios
 ```
 
-This launches the app in the selected iPhone simulator.
-
-If you are using a native build or need the app to include the native SQLite module properly, use:
+Or run the native iOS app build directly:
 
 ```bash
 npx expo run:ios
 ```
 
-This creates and launches the iOS native app build before running it.
-
-### 4) Run on Android emulator
-
-1. Open Android Studio.
-2. Start an Android emulator or device.
-3. Run:
+### Run on Android emulator
 
 ```bash
 npx expo start --android
 ```
 
-This launches the app in the Android emulator.
-
-If you need a native Android build with all native modules available:
+Or run the native Android build directly:
 
 ```bash
 npx expo run:android
 ```
 
-### 5) Run on a physical device with Expo Go
-
-1. Install Expo Go on your phone.
-2. Start the Metro server:
+### Run on a physical device with Expo Go
 
 ```bash
 npx expo start
 ```
 
-3. Scan the QR code with Expo Go.
+Then scan the QR code with Expo Go.
 
-This is useful for quick testing, but native features such as SQLite and camera permissions may behave differently than on a clean native build.
+## Native-module troubleshooting
 
-### 6) If the simulator says the native module is missing
-
-If you see errors like `Cannot find native module 'ExpoSQLite'`, it usually means the app is running in an environment where the native module has not been linked or rebuilt properly.
-
-Use the native build flow instead of only the JS bundler:
+If you see errors such as missing native modules or SQLite setup issues, rebuild the native app instead of only starting the JS bundler:
 
 ```bash
 npx expo install expo-sqlite
@@ -143,20 +182,29 @@ npx expo prebuild --clean
 npx expo run:android
 ```
 
-This ensures the native modules are generated and available for the simulator or emulator.
-
 ## Local SQLite database
 
-The app stores its captured records locally using SQLite, so data remains on the device even when the app is used offline.
+The app stores captured records locally in SQLite so the data remains on the device even when used offline.
 
-## Object lifecycle and capture flow
+The database is initialized lazily by `Database.getInstance()`, and the photos table stores:
 
-The object creation order is important in this app:
+- `id`
+- `uri`
+- `createdAt`
+- `latitude`
+- `longitude`
 
-1. `usePhotoRecorder()` creates a `PhotoManager` instance.
-2. The `PhotoManager` constructor creates the default `CameraTools`, `LocationTools`, and `PhotoDAO` dependencies.
-3. A `PhotoVO` is only created when a photo is being assembled with metadata (`uri`, `createdAt`, `latitude`, `longitude`).
-4. The database is not created in the UI layer; it is initialized lazily through `Database.getInstance()` inside `PhotoDAO.insertPhoto(photo)`.
+## Capture flow
+
+The capture lifecycle is as follows:
+
+1. the screen calls `takePhoto()` from the recorder hook
+2. the hook delegates to `PhotoManager.capturePhoto()`
+3. the manager requests/validates camera permissions
+4. the manager gets the current location if permission is granted
+5. a `PhotoVO` is created with the captured metadata
+6. the DAO inserts the record into the SQLite database
+7. the gallery loads the saved records from the database
 
 ```mermaid
 sequenceDiagram
@@ -173,51 +221,103 @@ sequenceDiagram
 
     User->>Screen: taps capture button
     Screen->>Hook: takePhoto()
-    Hook->>Hook: photoManager = new PhotoManager()
-    Hook->>Manager: new PhotoManager()
-    Manager->>Camera: new CameraTools()
-    Manager->>Location: new LocationTools()
-    Manager->>DAO: new PhotoDAO()
-
     Hook->>Manager: capturePhoto(cameraRef)
     Manager->>Camera: takePhoto(cameraRef)
     Camera-->>Manager: { uri: "file:///..." }
 
-    Manager->>Manager: ensureLocationPermission()
     Manager->>Location: checkLocationPermission()
     Location-->>Manager: "granted" | "denied"
 
-    alt status !== "granted"
-        Manager->>Location: requestLocationPermission()
-        Location-->>Manager: "granted" | "denied"
-    end
-
     alt status == "granted"
         Manager->>Location: getCurrentLocation()
-        Location-->>Manager: { latitude: 19.4326, longitude: -99.1332 }
+        Location-->>Manager: { latitude, longitude }
     else
         Manager->>Manager: latitude = null
         Manager->>Manager: longitude = null
     end
 
-    Manager->>Manager: setCurrentPhoto(uri, createdAt = new Date().toISOString(), latitude, longitude)
     Manager->>VO: new PhotoVO(uri, createdAt, latitude, longitude)
     VO-->>Manager: PhotoVO instance
 
     Manager->>DAO: insertPhoto(capturedPhoto)
     DAO->>DB: Database.getInstance()
+    DB-->>DAO: SQLite database instance
+    DAO->>DB: INSERT INTO photos (...)
+    DB-->>DAO: lastInsertRowId
+```
 
-    alt database not initialized
-        DB->>DB: getNativeSQLite()
-        DB->>DB: openDatabaseSync("photo_recorder.db")
-        DB->>DB: execSync("CREATE TABLE IF NOT EXISTS photos ...")
-        DB-->>DAO: SQLite database instance
-    else database already initialized
-        DB-->>DAO: existing SQLite database instance
-    end
+## Gallery flow
 
-    DAO->>DB: runAsync("INSERT INTO photos (uri, createdAt, latitude, longitude) VALUES (?, ?, ?, ?)", photo.uri, photo.createdAt, photo.latitude, photo.longitude)
-    DB-->>DAO: { lastInsertRowId: 1 }
+The gallery lifecycle is as follows:
+
+1. the gallery screen loads and requests the current photo list
+2. the hook asks the manager to read the stored records
+3. the manager delegates to the DAO to fetch all photos
+4. SQLite returns the persisted rows
+5. the screen renders the photo metadata and preview image
+
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User
+    participant Screen as GalleryScreen
+    participant Hook as usePhotoGallery()
+    participant Manager as PhotoManager
+    participant DAO as PhotoDAO
+    participant DB as Database
+
+    User->>Screen: opens gallery screen
+    Screen->>Hook: refreshPhotos()
+    Hook->>Manager: getPhotos()
+    Manager->>DAO: getPhotos()
+    DAO->>DB: Database.getInstance()
+    DB-->>DAO: SQLite database instance
+    DAO->>DB: SELECT * FROM photos ORDER BY createdAt DESC
+    DB-->>DAO: photo rows
+    DAO-->>Manager: photos[]
+    Manager-->>Hook: photos[]
+    Hook-->>Screen: setPhotos(photos)
+    Screen->>User: renders photo list, createdAt, latitude, longitude
+
+    User->>Screen: selects a photo
+    Screen->>Hook: loadPhotoById(id)
+    Hook->>Manager: getPhotoById(id)
+    Manager->>DAO: getPhotoById(id)
+    DAO->>DB: SELECT * FROM photos WHERE id = ?
+    DB-->>DAO: matching photo row
+    DAO-->>Manager: photo
+    Manager-->>Hook: photo
+    Hook-->>Screen: setSelectedPhoto(photo)
+    Screen->>User: displays selected photo details
+```
+
+## Testing
+
+Run the test suite with:
+
+```bash
+npm test
+```
+
+Run the manager-focused tests with:
+
+```bash
+npx jest __tests__/models/managers/PhotoManager.test.js --runInBand
+```
+
+## Notes
+
+- The app is intentionally designed as a local-first photo recorder.
+- The gallery screen displays the saved metadata, not only the image.
+- The codebase keeps the UI layer minimal and moves logic into hooks and manager classes.
+
+## Creation command
+
+```bash
+npx create-expo-app@latest photo-recorder-app --template blank
+```
+
+This project was initialized from that blank Expo template and then extended with the photo capture and local persistence flow.
 
     DAO->>VO: new PhotoVO(photo.uri, photo.createdAt, photo.latitude, photo.longitude)
     VO-->>DAO: PhotoVO instance

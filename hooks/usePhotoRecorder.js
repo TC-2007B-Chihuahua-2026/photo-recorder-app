@@ -1,6 +1,17 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import PhotoManager from '../models/managers/PhotoManager';
 
+/**
+ * Hook that manages the photo capture flow: permission checks, camera ref, and saved photo state.
+ *
+ * @returns {{
+ *   cameraRef: React.RefObject|null,
+ *   permissionStatus: string|null,
+ *   photoUri: string|null,
+ *   photoCoordinates: { latitude: number|null, longitude: number|null },
+ *   takePhoto: () => Promise<object|null>
+ * }} The capture state and actions for the recorder screen.
+ */
 export default function usePhotoRecorder() {
   const photoManager = useMemo(() => new PhotoManager(), []);
   const cameraRef = useRef(null);
