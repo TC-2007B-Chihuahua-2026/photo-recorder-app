@@ -3,9 +3,10 @@ import LocationTools from '../tools/LocationTools';
 import PhotoVO from '../valueobjects/PhotoVO';
 
 class PhotoManager {
-  constructor(cameraTools = new CameraTools(), locationTools = new LocationTools()) {
+  constructor(cameraTools = new CameraTools(), locationTools = new LocationTools(), photoDAO = null) {
     this.cameraTools = cameraTools;
     this.locationTools = locationTools;
+    this.photoDAO = photoDAO;
     this.currentPhoto = null;
   }
 
@@ -51,8 +52,15 @@ class PhotoManager {
       longitude = currentLocation?.longitude ?? null;
     }
 
-    const savedPhoto = this.setCurrentPhoto(photo.uri, undefined, latitude, longitude);
-    return savedPhoto;
+    const capturedPhoto = this.setCurrentPhoto(photo.uri, undefined, latitude, longitude);
+
+    if (this.photoDAO && typeof this.photoDAO.insertPhoto === 'function') {
+      const savedPhoto = await this.photoDAO.insertPhoto(capturedPhoto);
+      this.currentPhoto = savedPhoto;
+      return savedPhoto;
+    }
+
+    return capturedPhoto;
   }
 
   setCurrentPhoto(uri, createdAt = new Date().toISOString(), latitude = null, longitude = null) {

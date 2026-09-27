@@ -12,6 +12,10 @@ const mockLocationTools = {
   getCurrentLocation: jest.fn(),
 };
 
+const mockPhotoDAO = {
+  insertPhoto: jest.fn(),
+};
+
 describe('PhotoManager', () => {
   beforeEach(() => {
     jest.clearAllMocks();
@@ -68,18 +72,27 @@ describe('PhotoManager', () => {
     expect(mockCameraTools.requestCameraPermission).toHaveBeenCalledTimes(1);
   });
 
-  it('should capture a photo and attach the current location', async () => {
+  it('should capture a photo and persist it with the generated id inside capturePhoto', async () => {
     // GIVEN
     const cameraRef = { takePictureAsync: jest.fn() };
     mockCameraTools.takePhoto.mockResolvedValue({ uri: 'file:///mocked-photo.jpg' });
     mockLocationTools.checkLocationPermission.mockResolvedValue('granted');
     mockLocationTools.getCurrentLocation.mockResolvedValue({ latitude: 28.632995, longitude: -106.069099 });
-    const photoManager = new PhotoManager(mockCameraTools, mockLocationTools);
+    mockPhotoDAO.insertPhoto.mockResolvedValue({
+      id: 42,
+      uri: 'file:///mocked-photo.jpg',
+      createdAt: expect.any(String),
+      latitude: 28.632995,
+      longitude: -106.069099,
+    });
+    const photoManager = new PhotoManager(mockCameraTools, mockLocationTools, mockPhotoDAO);
 
     // WHEN
     const currentPhoto = await photoManager.capturePhoto(cameraRef);
 
     // THEN
+    expect(mockPhotoDAO.insertPhoto).toHaveBeenCalledTimes(1);
+    expect(currentPhoto.id).toBe(42);
     expect(currentPhoto.uri).toBe('file:///mocked-photo.jpg');
     expect(currentPhoto.latitude).toBe(28.632995);
     expect(currentPhoto.longitude).toBe(-106.069099);
