@@ -14,6 +14,8 @@ const mockLocationTools = {
 
 const mockPhotoDAO = {
   insertPhoto: jest.fn(),
+  getPhotos: jest.fn(),
+  getPhotoById: jest.fn(),
 };
 
 describe('PhotoManager', () => {
@@ -70,6 +72,55 @@ describe('PhotoManager', () => {
     // THEN
     expect(status).toBe('granted');
     expect(mockCameraTools.requestCameraPermission).toHaveBeenCalledTimes(1);
+  });
+
+  it('should retrieve all photos from the DAO', async () => {
+    // GIVEN
+    const savedPhotos = [
+      {
+        id: 2,
+        uri: 'file:///photo-2.jpg',
+        createdAt: '2026-09-27T11:00:00.000Z',
+        latitude: 28.6353,
+        longitude: -106.0889,
+      },
+      {
+        id: 1,
+        uri: 'file:///photo-1.jpg',
+        createdAt: '2026-09-27T10:00:00.000Z',
+        latitude: 28.6329,
+        longitude: -106.0691,
+      },
+    ];
+    mockPhotoDAO.getPhotos.mockResolvedValue(savedPhotos);
+    const photoManager = new PhotoManager(mockCameraTools, mockLocationTools, mockPhotoDAO);
+
+    // WHEN
+    const photos = await photoManager.getPhotos();
+
+    // THEN
+    expect(mockPhotoDAO.getPhotos).toHaveBeenCalledTimes(1);
+    expect(photos).toEqual(savedPhotos);
+  });
+
+  it('should retrieve a photo by id from the DAO', async () => {
+    // GIVEN
+    const savedPhoto = {
+      id: 2,
+      uri: 'file:///photo-2.jpg',
+      createdAt: '2026-09-27T11:00:00.000Z',
+      latitude: 28.6353,
+      longitude: -106.0889,
+    };
+    mockPhotoDAO.getPhotoById.mockResolvedValue(savedPhoto);
+    const photoManager = new PhotoManager(mockCameraTools, mockLocationTools, mockPhotoDAO);
+
+    // WHEN
+    const photo = await photoManager.getPhotoById(2);
+
+    // THEN
+    expect(mockPhotoDAO.getPhotoById).toHaveBeenCalledWith(2);
+    expect(photo).toEqual(savedPhoto);
   });
 
   it('should capture a photo and persist it with the generated id inside capturePhoto', async () => {

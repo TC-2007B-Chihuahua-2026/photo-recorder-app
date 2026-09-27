@@ -119,6 +119,33 @@ class PhotoManager {
   }
 
   /**
+   * Retrieves all persisted photos from the DAO.
+   *
+   * @returns {Promise<Array>} The saved photos or an empty array when no DAO is configured.
+   */
+  async getPhotos() {
+    if (!this.photoDAO || typeof this.photoDAO.getPhotos !== 'function') {
+      return [];
+    }
+
+    return this.photoDAO.getPhotos();
+  }
+
+  /**
+   * Retrieves a single persisted photo by id from the DAO.
+   *
+   * @param {number} id - Photo identifier.
+   * @returns {Promise<object|null>} The matching photo or null.
+   */
+  async getPhotoById(id) {
+    if (!this.photoDAO || typeof this.photoDAO.getPhotoById !== 'function') {
+      return null;
+    }
+
+    return this.photoDAO.getPhotoById(id);
+  }
+
+  /**
    * Clears the current saved photo reference.
    *
    * @returns {void}
