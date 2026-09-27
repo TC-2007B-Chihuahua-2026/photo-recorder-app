@@ -1,7 +1,7 @@
 import PhotoDAO from '../../../models/dao/PhotoDAO';
 
 describe('PhotoDAO', () => {
-  it('should insert a photo into the photos table', async () => {
+  it('should insert a photo into the photos table and return a PhotoVO with the generated id', async () => {
     // GIVEN
     const database = {
       runAsync: jest.fn().mockResolvedValue({ lastInsertRowId: 7, changes: 1 }),
@@ -27,7 +27,14 @@ describe('PhotoDAO', () => {
       photo.latitude,
       photo.longitude
     );
-    expect(result).toEqual({ lastInsertRowId: 7, changes: 1 });
+    expect(result).toMatchObject({
+      id: 7,
+      uri: photo.uri,
+      createdAt: photo.createdAt,
+      latitude: photo.latitude,
+      longitude: photo.longitude,
+    });
+    expect(result.constructor.name).toBe('PhotoVO');
   });
 
   it('should mark pending methods as not implemented yet', () => {

@@ -1,3 +1,5 @@
+import PhotoVO from '../valueobjects/PhotoVO';
+
 class PhotoDAO {
   constructor(database) {
     this.database = database;
@@ -8,13 +10,23 @@ class PhotoDAO {
       throw new Error('Database connection is required for PhotoDAO.insertPhoto.');
     }
 
-    return this.database.runAsync(
+    const result = await this.database.runAsync(
       'INSERT INTO photos (uri, createdAt, latitude, longitude) VALUES (?, ?, ?, ?)',
       photo.uri,
       photo.createdAt,
       photo.latitude,
       photo.longitude
     );
+
+    const persistedPhoto = new PhotoVO(
+      photo.uri,
+      photo.createdAt,
+      photo.latitude,
+      photo.longitude
+    );
+
+    persistedPhoto.id = result.lastInsertRowId;
+    return persistedPhoto;
   }
 
   getPhotos() {
