@@ -4,32 +4,34 @@ class Database {
   static instance = null;
   static initialized = false;
 
-  static initialize() {
-    if (this.initialized) {
-      return this.instance;
+  static getInstance() {
+    if (!this.instance) {
+      if (typeof SQLite.openDatabaseSync !== 'function') {
+        return null;
+      }
+
+      this.instance = SQLite.openDatabaseSync('photo_recorder.db');
+      this.instance.execSync(`
+        CREATE TABLE IF NOT EXISTS photos (
+          id INTEGER PRIMARY KEY AUTOINCREMENT,
+          uri TEXT NOT NULL,
+          createdAt TEXT NOT NULL,
+          latitude REAL,
+          longitude REAL
+        );
+      `);
+      this.initialized = true;
     }
 
-    this.instance = SQLite.openDatabaseSync('photo_recorder.db');
-    this.instance.execSync(`
-      CREATE TABLE IF NOT EXISTS photos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        uri TEXT NOT NULL,
-        createdAt TEXT NOT NULL,
-        latitude REAL,
-        longitude REAL
-      );
-    `);
-
-    this.initialized = true;
     return this.instance;
   }
 
-  static getDatabase() {
-    if (!this.initialized) {
-      return this.initialize();
-    }
+  static initialize() {
+    return this.getInstance();
+  }
 
-    return this.instance;
+  static getDatabase() {
+    return this.getInstance();
   }
 
   static isInitialized() {

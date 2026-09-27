@@ -1,16 +1,19 @@
+import Database from '../database/Database';
 import PhotoVO from '../valueobjects/PhotoVO';
 
 class PhotoDAO {
-  constructor(database) {
+  constructor(database = null) {
     this.database = database;
   }
 
   async insertPhoto(photo) {
-    if (!this.database || typeof this.database.runAsync !== 'function') {
+    const database = this.database || Database.getInstance();
+
+    if (!database || typeof database.runAsync !== 'function') {
       throw new Error('Database connection is required for PhotoDAO.insertPhoto.');
     }
 
-    const result = await this.database.runAsync(
+    const result = await database.runAsync(
       'INSERT INTO photos (uri, createdAt, latitude, longitude) VALUES (?, ?, ?, ?)',
       photo.uri,
       photo.createdAt,

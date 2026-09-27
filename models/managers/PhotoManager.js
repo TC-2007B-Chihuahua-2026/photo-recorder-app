@@ -1,9 +1,14 @@
+import PhotoDAO from '../dao/PhotoDAO';
 import CameraTools from '../tools/CameraTools';
 import LocationTools from '../tools/LocationTools';
 import PhotoVO from '../valueobjects/PhotoVO';
 
 class PhotoManager {
-  constructor(cameraTools = new CameraTools(), locationTools = new LocationTools(), photoDAO = null) {
+  constructor(
+    cameraTools = new CameraTools(),
+    locationTools = new LocationTools(),
+    photoDAO = new PhotoDAO()
+  ) {
     this.cameraTools = cameraTools;
     this.locationTools = locationTools;
     this.photoDAO = photoDAO;
