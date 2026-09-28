@@ -2,6 +2,7 @@
   "expo": {
     "name": "photo-recorder-app",
     "slug": "photo-recorder-app",
+    "scheme": "photorecorderapp",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
